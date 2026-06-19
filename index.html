@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home Remodel Financing Model</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f3;color:#1a1a18;padding:2rem 1rem;min-height:100vh}
+.container{max-width:780px;margin:0 auto}
+h1{font-size:22px;font-weight:500;margin-bottom:4px}
+p.subtitle{font-size:13px;color:#5f5e5a;margin-bottom:1.5rem}
+.section-label{font-size:11px;font-weight:500;color:#5f5e5a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:1.5rem}
+.card{background:#ebebea;border-radius:8px;padding:.75rem 1rem}
+.card-label{font-size:12px;color:#5f5e5a;margin-bottom:4px}
+.card-value{font-size:20px;font-weight:500;color:#1a1a18}
+.card-sub{font-size:11px;color:#5f5e5a;margin-top:2px}
+.panel{background:#fff;border:0.5px solid rgba(0,0,0,0.12);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem}
+.fi-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.fi-row:last-child{margin-bottom:0}
+.fi-row label{font-size:13px;color:#5f5e5a;min-width:150px}
+.fi-row input[type=range]{flex:2;accent-color:#185FA5}
+.fi-row .val{font-size:13px;font-weight:500;color:#1a1a18;min-width:72px;text-align:right}
+.fi-block{border-top:0.5px solid rgba(0,0,0,0.1);margin-top:10px;padding-top:10px}
+.fi-block:first-child{border-top:none;margin-top:0;padding-top:0}
+.fi-name{font-size:12px;font-weight:500;color:#1a1a18;margin-bottom:6px}
+.fi-name span{font-weight:400;color:#5f5e5a}
+.cash-display{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:#f5f5f3;border-radius:8px;font-size:13px}
+.summary-bar{display:flex;height:28px;border-radius:8px;overflow:hidden;margin-bottom:8px}
+.bar-seg{height:100%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;overflow:hidden;white-space:nowrap}
+.summary-legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:4px}
+.swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.summary-gap{font-size:12px;padding:5px 10px;border-radius:8px;margin-top:8px;background:#fcebeb;color:#791f1f}
+.toggle-btn{font-size:12px;padding:5px 12px;border:0.5px solid rgba(0,0,0,0.2);border-radius:8px;background:#fff;color:#5f5e5a;cursor:pointer}
+.toggle-btn.active{background:#e6f1fb;color:#0c447c;border-color:#378add}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:.75rem;font-size:12px;color:#5f5e5a}
+.legend span{display:flex;align-items:center;gap:5px}
+.note{font-size:11px;color:#888780;margin-top:.5rem}
+.derived{font-size:12px;color:#5f5e5a;margin-top:6px;padding:8px 10px;background:#f5f5f3;border-radius:8px;line-height:1.8}
+select{padding:4px 8px;border:0.5px solid rgba(0,0,0,0.2);border-radius:8px;background:#f5f5f3;color:#1a1a18;font-size:13px;flex:2}
+@media(max-width:540px){.grid3{grid-template-columns:1fr}.cards{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Home remodel financing model</h1>
+  <p class="subtitle">Net worth delta = home equity gained − cash spent − remaining loan balances − interest paid, compared to doing nothing</p>
+
+  <div class="panel">
+    <div class="section-label">Financing summary</div>
+    <div class="summary-bar" id="fi-bar"></div>
+    <div class="summary-legend" id="fi-legend"></div>
+    <div id="fi-gap"></div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="card-label">Remodel cost</div><div class="card-value" id="c-cost">—</div></div>
+    <div class="card"><div class="card-label">Home equity at close</div><div class="card-value" id="c-equity">—</div><div class="card-sub">post-reno value − all debt</div></div>
+    <div class="card"><div class="card-label">Monthly payments</div><div class="card-value" id="c-payment">—</div></div>
+    <div class="card"><div class="card-label">Net worth delta</div><div class="card-value" id="c-nw-delta">—</div><div class="card-sub" id="c-scenario-label">mid scenario</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="section-label">Remodel &amp; home</div>
+    <div class="fi-row"><label>Remodel cost</label><input type="range" id="r-cost" min="0" max="1000000" step="25000" value="600000"><span class="val" id="v-cost">$600k</span></div>
+    <div class="fi-row"><label>Current home value</label><input type="range" id="r-home" min="200000" max="3000000" step="25000" value="750000"><span class="val" id="v-home">$750k</span></div>
+    <div class="fi-row"><label>Expected value after renovation</label><input type="range" id="r-postval" min="200000" max="4000000" step="25000" value="1400000"><span class="val" id="v-postval">$1.4M</span></div>
+    <div class="derived" id="derived-equity"></div>
+    <p class="note" style="margin-top:8px">Home equity at close = post-reno value − all debt. Net worth change vs. baseline = home equity gained − cash spent − interest paid.</p>
+  </div>
+
+  <div class="panel">
+    <div class="section-label">Financing options</div>
+    <p style="font-size:12px;color:#5f5e5a;margin-bottom:12px">Adjust debt sources below. Cash covers whatever isn't financed by debt.</p>
+
+    <div class="fi-block">
+      <div class="fi-name">Cash / savings <span>(implied remainder)</span></div>
+      <div class="cash-display">
+        <span style="color:#5f5e5a">Unfunded amount covered by cash</span>
+        <strong id="cash-implied-val" style="color:#1a1a18">—</strong>
+      </div>
+    </div>
+
+    <div class="fi-block">
+      <div class="fi-name">Old HELOC <span>(low rate)</span></div>
+      <div class="fi-row"><label>Amount borrowed</label><input type="range" id="fi-heloc-old-amt" min="0" max="1000000" step="25000" value="100000"><span class="val" id="fv-heloc-old-amt">$100k</span></div>
+      <div class="fi-row"><label>Rate (%)</label><input type="range" id="fi-heloc-old-rate" min="0" max="10" step="0.25" value="6"><span class="val" id="fv-heloc-old-rate">6.00%</span></div>
+      <div class="fi-row"><label>Term (years)</label><input type="range" id="fi-heloc-old-term" min="0" max="30" step="1" value="20"><span class="val" id="fv-heloc-old-term">20 yr</span></div>
+    </div>
+
+    <div class="fi-block">
+      <div class="fi-name">New HELOC <span>(current rates)</span></div>
+      <div class="fi-row"><label>Amount borrowed</label><input type="range" id="fi-heloc-new-amt" min="0" max="1000000" step="25000" value="300000"><span class="val" id="fv-heloc-new-amt">$300k</span></div>
+      <div class="fi-row"><label>Rate (%)</label><input type="range" id="fi-heloc-new-rate" min="0" max="15" step="0.25" value="7.5"><span class="val" id="fv-heloc-new-rate">7.50%</span></div>
+      <div class="fi-row"><label>Term (years)</label><input type="range" id="fi-heloc-new-term" min="0" max="30" step="1" value="20"><span class="val" id="fv-heloc-new-term">20 yr</span></div>
+    </div>
+
+    <div class="fi-block">
+      <div class="fi-name">Pledged Asset Line <span>(interest-only)</span></div>
+      <div class="fi-row"><label>Amount borrowed</label><input type="range" id="fi-pal-amt" min="0" max="1000000" step="25000" value="0"><span class="val" id="fv-pal-amt">$0</span></div>
+      <div class="fi-row"><label>Rate (%)</label><input type="range" id="fi-pal-rate" min="0" max="12" step="0.25" value="6.0"><span class="val" id="fv-pal-rate">6.00%</span></div>
+      <div class="fi-row"><label>Portfolio continues earning?</label>
+        <select id="fi-pal-earn">
+          <option value="yes">Yes — assets stay invested</option>
+          <option value="no">No — counts as liquidation</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-label">Growth assumptions</div>
+    <div class="grid3">
+      <div>
+        <div class="section-label" style="font-size:10px">Real estate (annual)</div>
+        <div class="fi-row" style="margin-bottom:8px"><label style="font-size:12px;min-width:40px">Low</label><input type="range" id="r-re-lo" min="0" max="10" step="0.5" value="1"><span class="val" id="v-re-lo">1.0%</span></div>
+        <div class="fi-row" style="margin-bottom:8px"><label style="font-size:12px;min-width:40px">Mid</label><input type="range" id="r-re-md" min="0" max="10" step="0.5" value="3.5"><span class="val" id="v-re-md">3.5%</span></div>
+        <div class="fi-row" style="margin-bottom:0"><label style="font-size:12px;min-width:40px">High</label><input type="range" id="r-re-hi" min="0" max="15" step="0.5" value="6"><span class="val" id="v-re-hi">6.0%</span></div>
+      </div>
+      <div>
+        <div class="section-label" style="font-size:10px">Stock market (annual)</div>
+        <div class="fi-row" style="margin-bottom:8px"><label style="font-size:12px;min-width:40px">Low</label><input type="range" id="r-mkt-lo" min="0" max="15" step="0.5" value="3"><span class="val" id="v-mkt-lo">3.0%</span></div>
+        <div class="fi-row" style="margin-bottom:8px"><label style="font-size:12px;min-width:40px">Mid</label><input type="range" id="r-mkt-md" min="0" max="15" step="0.5" value="7"><span class="val" id="v-mkt-md">7.0%</span></div>
+        <div class="fi-row" style="margin-bottom:0"><label style="font-size:12px;min-width:40px">High</label><input type="range" id="r-mkt-hi" min="0" max="20" step="0.5" value="10"><span class="val" id="v-mkt-hi">10.0%</span></div>
+      </div>
+      <div>
+        <div class="section-label" style="font-size:10px">Time horizon</div>
+        <div class="fi-row" style="margin-bottom:12px"><label style="font-size:12px;min-width:40px">Years</label><input type="range" id="r-years" min="1" max="30" step="1" value="10"><span class="val" id="v-years">10 yrs</span></div>
+        <div class="section-label" style="font-size:10px">Show scenarios</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="toggle-btn active" data-sc="low">Low</button>
+          <button class="toggle-btn active" data-sc="mid">Mid</button>
+          <button class="toggle-btn active" data-sc="high">High</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="legend" id="chart-legend"></div>
+    <div style="position:relative;width:100%;height:340px">
+      <canvas id="chart" role="img" aria-label="Line chart showing net worth delta over time vs not remodeling">Net worth projections across growth scenarios.</canvas>
+    </div>
+    <p class="note" style="margin-top:.5rem">
+      Y-axis = your net worth with the remodel minus your net worth without it, at each point in time.<br>
+      Zero = remodel broke even vs. doing nothing &nbsp;·&nbsp; Positive = remodel made you wealthier &nbsp;·&nbsp; Negative = you'd have been better off not remodeling.<br>
+      Opportunity cost of cash = foregone market returns on money spent. PAL with "assets stay invested" has no opportunity cost.
+    </p>
+  </div>
+
+  <p style="font-size:11px;color:#888780;text-align:center;margin-top:1rem">For illustrative purposes only. Not financial advice.</p>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmtK = n => {
+  const a=Math.abs(n), s=n<0?'-':'';
+  if(a>=1000000) return s+'$'+(a/1000000).toFixed(2).replace(/\.?0+$/,'')+'M';
+  if(a>=1000) return s+'$'+(a/1000).toFixed(1).replace(/\.0$/,'')+'k';
+  return s+'$'+Math.round(a);
+};
+
+const FI_COLORS = {
+  cash:     {hex:'#888780', label:'Cash / savings'},
+  helocOld: {hex:'#185FA5', label:'Old HELOC'},
+  helocNew: {hex:'#0F6E56', label:'New HELOC'},
+  pal:      {hex:'#993C1D', label:'Pledged Asset Line'},
+};
+
+const sliders = [
+  ['r-cost','v-cost',v=>fmtK(v)],
+  ['r-home','v-home',v=>fmtK(v)],
+  ['r-postval','v-postval',v=>fmtK(v)],
+  ['r-re-lo','v-re-lo',v=>(+v).toFixed(1)+'%'],['r-re-md','v-re-md',v=>(+v).toFixed(1)+'%'],['r-re-hi','v-re-hi',v=>(+v).toFixed(1)+'%'],
+  ['r-mkt-lo','v-mkt-lo',v=>(+v).toFixed(1)+'%'],['r-mkt-md','v-mkt-md',v=>(+v).toFixed(1)+'%'],['r-mkt-hi','v-mkt-hi',v=>(+v).toFixed(1)+'%'],
+  ['r-years','v-years',v=>v+' yrs'],
+  ['fi-heloc-old-amt','fv-heloc-old-amt',v=>fmtK(v)],
+  ['fi-heloc-old-rate','fv-heloc-old-rate',v=>(+v).toFixed(2)+'%'],
+  ['fi-heloc-old-term','fv-heloc-old-term',v=>v+' yr'],
+  ['fi-heloc-new-amt','fv-heloc-new-amt',v=>fmtK(v)],
+  ['fi-heloc-new-rate','fv-heloc-new-rate',v=>(+v).toFixed(2)+'%'],
+  ['fi-heloc-new-term','fv-heloc-new-term',v=>v+' yr'],
+  ['fi-pal-amt','fv-pal-amt',v=>fmtK(v)],
+  ['fi-pal-rate','fv-pal-rate',v=>(+v).toFixed(2)+'%'],
+];
+sliders.forEach(([sid,vid,fn])=>{
+  const s=$(sid),v=$(vid);
+  if(!s||!v) return;
+  s.addEventListener('input',()=>{v.textContent=fn(+s.value);update();});
+});
+$('fi-pal-earn').addEventListener('change',update);
+
+let activeScenarios={low:true,mid:true,high:true};
+document.querySelectorAll('.toggle-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const sc=b.dataset.sc;
+    activeScenarios[sc]=!activeScenarios[sc];
+    b.classList.toggle('active',activeScenarios[sc]);
+    update();
+  });
+});
+
+function getFinancing(){
+  const cost        = +$('r-cost').value;
+  const helocOldAmt = +$('fi-heloc-old-amt').value;
+  const helocNewAmt = +$('fi-heloc-new-amt').value;
+  const palAmt      = +$('fi-pal-amt').value;
+  const totalDebt   = helocOldAmt + helocNewAmt + palAmt;
+  const cash        = Math.max(0, cost - totalDebt);
+  const over        = Math.max(0, totalDebt - cost);
+  return { cost, cash, helocOldAmt, helocNewAmt, palAmt, totalDebt, over,
+    helocOldRate: +$('fi-heloc-old-rate').value,
+    helocOldTerm: +$('fi-heloc-old-term').value,
+    helocNewRate: +$('fi-heloc-new-rate').value,
+    helocNewTerm: +$('fi-heloc-new-term').value,
+    palRate:      +$('fi-pal-rate').value,
+    palEarns:     $('fi-pal-earn').value==='yes',
+  };
+}
+
+function monthlyPayment(principal,annualRate,termYears){
+  if(!principal||!annualRate||!termYears) return 0;
+  const r=annualRate/100/12,n=termYears*12;
+  return principal*(r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1);
+}
+
+function loanBalance(principal,annualRate,termYears,mp,y){
+  if(!principal) return 0;
+  if(!annualRate||!termYears) return principal;
+  if(y>=termYears) return 0;
+  const r=annualRate/100/12,paid=y*12;
+  return Math.max(0,principal*Math.pow(1+r,paid)-mp*((Math.pow(1+r,paid)-1)/r));
+}
+
+function interestPaid(principal,annualRate,termYears,mp,y){
+  if(!principal||!annualRate||!termYears) return 0;
+  const months=Math.min(y,termYears)*12;
+  const bal=loanBalance(principal,annualRate,termYears,mp,y);
+  return Math.max(0,mp*months-(principal-bal));
+}
+
+function computeSeries(reRate,mktRate,years){
+  const f       = getFinancing();
+  const homeVal = +$('r-home').value;
+  const postVal = +$('r-postval').value;
+  const mpOld   = monthlyPayment(f.helocOldAmt,f.helocOldRate,f.helocOldTerm);
+  const mpNew   = monthlyPayment(f.helocNewAmt,f.helocNewRate,f.helocNewTerm);
+  const palMo   = f.palAmt*(f.palRate/100)/12; // interest-only monthly payment
+
+  // Future value of an annuity: what monthly payment P invested at mktRate grows to over n months.
+  // FV = P * ((1+r)^n - 1) / r
+  // This gives the market value of investing those payments instead of making them.
+  function fvPayments(monthlyPmt, annualRate, months) {
+    if(!monthlyPmt || months <= 0) return 0;
+    if(!annualRate) return monthlyPmt * months;
+    const r = annualRate/100/12;
+    return monthlyPmt * ((Math.pow(1+r, months) - 1) / r);
+  }
+
+  const series  = [];
+  for(let y=0;y<=years;y++){
+    // ── With remodel ──────────────────────────────────────────────────────
+    const homeValueWithReno  = postVal*Math.pow(1+reRate/100,y);
+    const balOld             = loanBalance(f.helocOldAmt,f.helocOldRate,f.helocOldTerm,mpOld,y);
+    const balNew             = loanBalance(f.helocNewAmt,f.helocNewRate,f.helocNewTerm,mpNew,y);
+    const totalDebtRemaining = balOld+balNew+f.palAmt;
+    const intOld             = interestPaid(f.helocOldAmt,f.helocOldRate,f.helocOldTerm,mpOld,y);
+    const intNew             = interestPaid(f.helocNewAmt,f.helocNewRate,f.helocNewTerm,mpNew,y);
+    const totalInterest      = intOld+intNew+f.palAmt*(f.palRate/100)*y;
+    const nwWithReno         = (homeValueWithReno-totalDebtRemaining)-f.cash-totalInterest;
+
+    // ── Without remodel (baseline) ────────────────────────────────────────
+    const homeValueNoReno = homeVal*Math.pow(1+reRate/100,y);
+
+    // Opportunity cost of initial cash deployed (growth only, principal cancels)
+    const cashOpp = f.cash*(Math.pow(1+mktRate/100,y)-1);
+
+    // Opportunity cost of PAL principal (growth only, if treated as liquidation)
+    const palOpp = f.palEarns ? f.palAmt*(Math.pow(1+mktRate/100,y)-1) : 0;
+
+    // Opportunity cost of loan payments: each monthly payment could have been
+    // invested in the market instead. We compute the future value of that annuity.
+    // For HELOC loans, payments stop after the loan term; for PAL, interest-only forever.
+    const oldMonths = Math.min(y, f.helocOldTerm) * 12;
+    const newMonths = Math.min(y, f.helocNewTerm) * 12;
+    const palMonths = y * 12;
+
+    // FV of HELOC payments invested in market over the months they were actually made,
+    // then grown to year y (payments made in months 0..n, then that pool grows further).
+    // Approximate: treat as annuity growing for oldMonths, then lump sum for remainder.
+    const oldPaymentOpp = fvPayments(mpOld, mktRate, oldMonths) * Math.pow(1+mktRate/100, y - Math.min(y, f.helocOldTerm));
+    const newPaymentOpp = fvPayments(mpNew, mktRate, newMonths) * Math.pow(1+mktRate/100, y - Math.min(y, f.helocNewTerm));
+    const palPaymentOpp = fvPayments(palMo, mktRate, palMonths);
+
+    const nwWithoutReno = homeValueNoReno + cashOpp + palOpp + oldPaymentOpp + newPaymentOpp + palPaymentOpp;
+    series.push(Math.round(nwWithReno-nwWithoutReno));
+  }
+  return series;
+}
+
+function updateFinancingSummary(){
+  const f    = getFinancing();
+  const cost = f.cost||1;
+  const segs = [
+    {key:'cash',    amt:f.cash,       color:FI_COLORS.cash.hex,     label:FI_COLORS.cash.label},
+    {key:'helocOld',amt:f.helocOldAmt,color:FI_COLORS.helocOld.hex, label:FI_COLORS.helocOld.label},
+    {key:'helocNew',amt:f.helocNewAmt,color:FI_COLORS.helocNew.hex, label:FI_COLORS.helocNew.label},
+    {key:'pal',     amt:f.palAmt,     color:FI_COLORS.pal.hex,      label:FI_COLORS.pal.label},
+  ].filter(s=>s.amt>0);
+  $('fi-bar').innerHTML=segs.map(s=>{
+    const pct=Math.min(100,(s.amt/cost)*100).toFixed(1);
+    return `<div class="bar-seg" style="width:${pct}%;background:${s.color};color:#fff">${pct>10?fmtK(s.amt):''}</div>`;
+  }).join('');
+  $('fi-legend').innerHTML=segs.map(s=>
+    `<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#5f5e5a">
+      <div class="swatch" style="background:${s.color}"></div>
+      <span>${s.label}: <strong style="color:#1a1a18">${fmtK(s.amt)}</strong></span>
+    </div>`).join('');
+  $('cash-implied-val').textContent=fmtK(f.cash);
+  $('cash-implied-val').style.color=f.cash>0?'#1a1a18':'#888780';
+  $('fi-gap').innerHTML=f.over>0
+    ?`<div class="summary-gap">Debt sources exceed remodel cost by ${fmtK(f.over)} — reduce one or more loan amounts.</div>`:'';
+}
+
+const palette={low:{solid:'#185FA5'},mid:{solid:'#0F6E56'},high:{solid:'#993C1D'}};
+let myChart=null;
+
+function update(){
+  const f        = getFinancing();
+  const homeVal  = +$('r-home').value;
+  const postVal  = +$('r-postval').value;
+  const years    = +$('r-years').value;
+  const reRates  = {low:+$('r-re-lo').value,mid:+$('r-re-md').value,high:+$('r-re-hi').value};
+  const mktRates = {low:+$('r-mkt-lo').value,mid:+$('r-mkt-md').value,high:+$('r-mkt-hi').value};
+  updateFinancingSummary();
+
+  const homeEquityAtClose = postVal-f.totalDebt;
+  const eqColor = homeEquityAtClose>=homeVal?'#27500A':'#791F1F';
+  $('derived-equity').innerHTML=
+    `Post-reno home value: <strong>${fmtK(postVal)}</strong> &nbsp;·&nbsp; `+
+    `Total debt: <strong>${fmtK(f.totalDebt)}</strong> &nbsp;·&nbsp; `+
+    `Home equity at close: <strong style="color:${eqColor}">${fmtK(homeEquityAtClose)}</strong><br>`+
+    `Cash out of pocket: <strong>${fmtK(f.cash)}</strong> &nbsp;·&nbsp; `+
+    `Net worth change at close vs. baseline: <strong>${fmtK(computeSeries(0,0,0)[0])}</strong>`;
+
+  $('c-cost').textContent=fmtK(f.cost);
+  $('c-equity').textContent=fmtK(homeEquityAtClose);
+  $('c-equity').style.color=homeEquityAtClose>=homeVal?'#27500A':'#791F1F';
+
+  const mpOld=monthlyPayment(f.helocOldAmt,f.helocOldRate,f.helocOldTerm);
+  const mpNew=monthlyPayment(f.helocNewAmt,f.helocNewRate,f.helocNewTerm);
+  const palMo=f.palAmt*(f.palRate/100)/12;
+  const totalMp=mpOld+mpNew+palMo;
+  $('c-payment').textContent=totalMp>0?fmtK(Math.round(totalMp))+'/mo':'No debt';
+
+  const midSeries=computeSeries(reRates.mid,mktRates.mid,years);
+  $('c-nw-delta').textContent=fmtK(midSeries[years]);
+  $('c-nw-delta').style.color=midSeries[years]>=0?'#27500A':'#791F1F';
+  $('c-scenario-label').textContent='mid scenario, yr '+years;
+
+  const labels=Array.from({length:years+1},(_,i)=>i===0?'Now':'Yr '+i);
+  const scKeys=['low','mid','high'];
+  const scLabels={low:'Low growth',mid:'Mid growth',high:'High growth'};
+  const dashStyles={low:[6,3],mid:[],high:[2,2]};
+  const datasets=[];
+  scKeys.forEach(sc=>{
+    if(!activeScenarios[sc]) return;
+    datasets.push({label:scLabels[sc],data:computeSeries(reRates[sc],mktRates[sc],years),
+      borderColor:palette[sc].solid,backgroundColor:'transparent',
+      borderWidth:2,pointRadius:2,tension:0.35,borderDash:dashStyles[sc]});
+  });
+
+  $('chart-legend').innerHTML=scKeys.filter(sc=>activeScenarios[sc]).map(sc=>`
+    <span>
+      <i style="display:inline-block;width:24px;height:0;border-bottom:2px ${sc==='low'?'dashed':sc==='high'?'dotted':'solid'} ${palette[sc].solid}"></i>
+      ${scLabels[sc]} (RE: ${reRates[sc]}%, Mkt: ${mktRates[sc]}%)
+    </span>`).join('');
+
+  if(myChart) myChart.destroy();
+  myChart=new Chart($('chart'),{
+    type:'line',data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmtK(ctx.parsed.y)}`}}},
+      scales:{
+        x:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{font:{size:11},maxTicksLimit:12,autoSkip:true}},
+        y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{font:{size:11},callback:v=>fmtK(v)},
+          title:{display:true,text:'Net worth with remodel − net worth without remodel',font:{size:11}}}
+      }
+    }
+  });
+}
+
+update();
+</script>
+</body>
+</html>
